@@ -1,0 +1,5 @@
+{
+    "ext": "js,ts,.env",
+    "ignore": ["dist", "node_modules"],
+    "exec": "ts-node ./src/index.ts"
+}
