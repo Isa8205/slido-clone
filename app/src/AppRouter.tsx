@@ -11,7 +11,10 @@ export default function AppRouter() {
             <Routes>
                 <Route path="/" Component={LandingPage}/>
                 <Route path="/dashboard" Component={DashboardPage}/>
-                <Route path="auth" Component={AuthPage}/>
+                <Route path="/auth">
+                    <Route path="login" Component={AuthPage}/>
+                    <Route path="signup" element={<div>signup page</div>} />
+                </Route>
                 <Route path="join/:roomCode" element={<JoinPage/>}/>
                 <Route path="quiz/:roomCode" element={<QuizPage/>}/>
                 <Route path="*" Component={() => <div>404 Not Found</div>}/>

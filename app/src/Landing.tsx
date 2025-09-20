@@ -19,7 +19,7 @@ export default function LandingPage() {
   }
 
   const handleHostQuiz = () => {
-    navigate("/auth")
+    navigate("/auth/login")
   }
 
   return (

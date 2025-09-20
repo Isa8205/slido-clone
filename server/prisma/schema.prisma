@@ -14,17 +14,31 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  rooms     Room[]   @relation("UserRooms")
+  id          String      @id @default(cuid())
+  username    String      @unique
+  email       String      @unique
+  password    String
+  createdAt   DateTime    @default(now())
+  rooms       Room[]
 }
 
 model Room {
-  id        String   @id @default(cuid())
-  code      String   @unique
-  createdAt DateTime @default(now())
-  users     User[]   @relation("UserRooms")
+  id          String      @id @default(cuid())
+  code        String      @unique
+  isLocked    Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  endedAt     DateTime?   
+  owner       User        @relation(fields: [ownerId], references: [id])
+  ownerId     String
+  quizzes     QuizSet[]
+}
+
+model QuizSet {
+  id          String      @id @default(cuid())
+  quizzes     Json?
+  results     Json?
+  room        Room        @relation(fields: [roomId], references: [id])
+  roomId      String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
