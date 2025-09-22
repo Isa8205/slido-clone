@@ -4,6 +4,7 @@ import DashboardPage from "./pages/dashboard/page";
 import AuthPage from "./pages/auth/page";
 import QuizPage from "./pages/quiz/page";
 import JoinPage from "./pages/join/page";
+import AwaitParticipantsPage from "./pages/room/AwaitParticipants";
 
 export default function AppRouter() {
     return (
@@ -14,6 +15,10 @@ export default function AppRouter() {
                 <Route path="/auth">
                     <Route path="login" Component={AuthPage}/>
                     <Route path="signup" element={<div>signup page</div>} />
+                </Route>
+                <Route path="/room">
+                    <Route path=":roomCode" element={<AwaitParticipantsPage/>}/>
+                    <Route path=":roomCode/quiz" element={<JoinPage/>}/>
                 </Route>
                 <Route path="join/:roomCode" element={<JoinPage/>}/>
                 <Route path="quiz/:roomCode" element={<QuizPage/>}/>
