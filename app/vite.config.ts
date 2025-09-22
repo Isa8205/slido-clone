@@ -7,11 +7,6 @@ export default defineConfig({
     host: "0.0.0.0",
     port: 5173,
     strictPort: true,
-    hmr: {
-      host: "slido.local", // browser origin (goes through Nginx)
-      protocol: "wss",     // since Nginx is serving HTTPS
-      port: 443            // but this is NOT Vite listening here
-    },
     allowedHosts: [
       'slido.local',
       'localhost'

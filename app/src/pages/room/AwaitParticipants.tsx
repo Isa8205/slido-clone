@@ -1,10 +1,8 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { QuizLayout } from "@/components/quiz-layout"
-import { getSession } from "@/lib/auth"
+import { getSession, type User } from "@/lib/auth"
 import type { Participant } from "@/lib/room"
 import { motion, AnimatePresence } from "framer-motion"
 import { Users, UserPlus, LogOut } from "lucide-react"
@@ -12,15 +10,19 @@ import { useNavigate, useParams } from "react-router-dom"
 import { useSocket } from "@/hooks/useSocket"
 
 export default function AwaitParticipantsPage() {
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [participants, setParticipants] = useState<Participant[]>([])
 
   const { roomCode } = useParams()
   const navigate = useNavigate()
+
+  if (!roomCode || !user) {
+    navigate("/")
+  }
   const socket = useSocket(roomCode!)
 
   const handleLeaveRoom = () => {
-    socket.emit("leave-room", user.name)
+    socket.emit("leave-room", user?.name)
     navigate("/")
   }
 
@@ -37,7 +39,7 @@ export default function AwaitParticipantsPage() {
     return () => {
         socket.off("new-participant")
     }
-  })
+  }, [socket])
 
   return (
     <QuizLayout title="Room">
@@ -49,7 +51,7 @@ export default function AwaitParticipantsPage() {
                     <p className="text-muted-foreground">The quiz session will begin once participants join</p>
                 </div>
 
-                <button className="inline-flex px-3 py-1 items-center gap-2 rounded-full bg-red-300 text-red-600 cursor-pointer hover:opacity-80">
+                <button className="inline-flex px-3 py-1 items-center gap-2 rounded-full bg-destructive/30 text-red-600 cursor-pointer hover:opacity-80">
                     <LogOut className="w-4 h-4" />
                     Leave
                 </button>

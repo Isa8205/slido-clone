@@ -11,7 +11,13 @@ export default function AppRouter() {
         <div className="min-h-screen">
             <Routes>
                 <Route path="/" Component={LandingPage}/>
-                <Route path="/dashboard" Component={DashboardPage}/>
+                <Route path="/dashboard">
+                    <Route path="" element={<DashboardPage/>}/>
+                    <Route path="room">
+                        <Route path=":roomCode" element={<AwaitParticipantsPage/>}/>
+                        <Route path=":roomCode/quiz" element={<JoinPage/>}/>
+                    </Route>
+                </Route>
                 <Route path="/auth">
                     <Route path="login" Component={AuthPage}/>
                     <Route path="signup" element={<div>signup page</div>} />

@@ -4,9 +4,9 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Zap, Trophy, ArrowLeft } from "lucide-react"
+import { Users, Zap, Trophy } from "lucide-react"
 import { motion } from "framer-motion"
-import { NavLink, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { Label } from "@/components/ui/label"
 import toast from "react-hot-toast"
 import api from "./lib/axios"
@@ -37,7 +37,7 @@ export default function LandingPage() {
         } else if (status === 302) {
           toast.error("The room has ended!");
         } else {
-          toast.error("Something went wrong, please try again.");
+          toast.error("Something went wrong, please try again." + err.message);
         }
       } else {
         toast.error("Unexpected error.");

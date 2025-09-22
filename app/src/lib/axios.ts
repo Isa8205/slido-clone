@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3000/api/',
+  baseURL: 'http://172.16.75.156:3000/api/',
   timeout: 5000,
   headers: {
     'Content-Type': 'application/json',
@@ -25,7 +25,7 @@ api.interceptors.response.use(response => {
   if (error.response && error.response.status === 401) {
     // Handle unauthorized access, e.g., redirect to login
     console.error('Unauthorized! Redirecting to login...');
-    window.location.href = '/login';
+    window.location.href = '/auth/login';
   }
   return Promise.reject(error);
 });

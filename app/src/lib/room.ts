@@ -3,6 +3,12 @@ export interface Room {
   hostId: string
   hostName: string
   status: "waiting" | "active" | "ended"
+  questions: {
+    id: string
+    question: string
+    options: string[]
+    correctAnswer: number
+  }[]
   createdAt: Date
   participants: string[]
 }
@@ -34,6 +40,7 @@ export function createRoom(code: string, hostName: string): Room {
     hostId: Math.random().toString(36).substr(2, 9),
     hostName,
     status: "waiting",
+    questions: [],
     createdAt: new Date(),
     participants: [],
   }
