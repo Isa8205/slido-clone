@@ -12,7 +12,7 @@ const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
-  "http://172.16.75.156:5173"
+  "http://192.168.88.67:5173"
   
 ]
 
@@ -51,7 +51,7 @@ const httpServer = createServer(app);
 
 export const io = new Server(httpServer, {
   cors: {
-    origin: "*",
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
     methods: ["GET", "POST"],
     credentials: true
   }

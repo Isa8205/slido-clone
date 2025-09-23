@@ -18,6 +18,14 @@ const router = Router();
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET;
 
+router.get("/me", authMiddleware, async(req, res) => {
+    const user = req.user;
+    if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
+    }
+    res.status(200).json({ user });
+});
+
 router.post("/login", async(req, res) => {
     const { username, password } = req.body;
     console.log(username, password);
@@ -33,7 +41,12 @@ router.post("/login", async(req, res) => {
             { id: user.id, username: user.username, email: user.email },
             JWT_SECRET!
         );
-        res.cookie("access-token", token, { httpOnly: true });
+        res.cookie("access-token", token, {
+            expires: new Date(Date.now() + 3600000), 
+            httpOnly: true, 
+            secure: true, 
+            sameSite: "none" 
+        });
         res.status(200).json({ message: "User logged in successfully", token });
     } else {
         res.status(401).json({ message: "Invalid credentials" });
