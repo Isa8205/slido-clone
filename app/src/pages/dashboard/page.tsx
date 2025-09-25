@@ -5,26 +5,19 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { QuizLayout } from "@/components/quiz-layout"
 import { AuthGuard } from "@/components/auth-guard"
-import { getSession, clearSession } from "@/lib/auth"
 import { motion } from "framer-motion"
 import { LogOut } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import toast from "react-hot-toast"
 import api from "@/lib/axios"
 import axios from "axios"
+import { useAuth } from "@/context/AuthContext"
 
 export default function DashboardPage() {
+  const { user, logout } = useAuth()
   const [isCreatingRoom, setIsCreatingRoom] = useState(false)
-  const [user, setUser] = useState<any>(null)
   const navigate = useNavigate()
 
-
-  useEffect(() => {
-    const session = getSession()
-    if (session?.user) {
-      setUser(session.user)
-    }
-  }, [])
 
   const handleCreateRoom = async () => {
     setIsCreatingRoom(true)
@@ -55,9 +48,9 @@ export default function DashboardPage() {
     }
   }
 
-  const handleLogout = () => {
-    clearSession()
-    navigate("/")
+  const handleLogout = async() => {
+    await logout()
+    await navigate("/")
   }
 
   return (
@@ -67,7 +60,7 @@ export default function DashboardPage() {
           {/* Header */}
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Welcome back, {user?.name}!</h1>
+              <h1 className="text-3xl font-bold text-foreground">Welcome back, {user?.username}!</h1>
               <p className="text-muted-foreground">Create and manage your quiz sessions</p>
             </div>
             <Button variant="outline" onClick={handleLogout} className="gap-2 bg-transparent">

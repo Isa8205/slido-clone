@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type FormEvent, type FormEventHandler } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,12 +11,15 @@ import { Label } from "@/components/ui/label"
 import toast from "react-hot-toast"
 import api from "./lib/axios"
 import axios from "axios"
+import { clearSession, getSession } from "./lib/auth"
 
 export default function LandingPage() {
   const [roomCode, setRoomCode] = useState("")
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false)
   const [isPinging, setIsPinging] = useState(false)
   const navigate = useNavigate()
+
+  const session = getSession()
 
   const handleJoinQuiz = async() => {
     setIsPinging(true)
@@ -53,6 +56,24 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-card to-muted">
+      {/* <Header /> */}
+      <header className="border-b border-border bg-card px-8 flex justify-between">
+        <div className="px-4 py-4">
+          <h1 className="text-2xl font-bold text-primary">QuizMaster</h1>
+        </div>
+
+        <div className="px-4 py-4">
+          {session?.isAuthenticated ? (
+            <div className="flex gap-2">
+              <Button className="" onClick={() => clearSession()}>Logout</Button>
+              <img className="h-10 w-10 rounded-full" src="https://picsum.photos/200/200" alt="profile" />
+            </div>
+          ) : (
+            <Button onClick={() => navigate("/auth/login")}>Login</Button>
+          )}
+        </div>
+      </header>
+
       <div className="container mx-auto px-4 py-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -173,7 +194,8 @@ const JoinModal = ({roomCode}: {roomCode: string}) => {
   const [isJoining, setIsJoining] = useState(false)
   const navigate = useNavigate()
 
-  const handleJoin = async() => {
+  const handleJoin = async(e: FormEvent) => {
+    e.preventDefault()
     setIsJoining(true);
     try {
       const res = await api.post(`room/join/${roomCode}`, { username })
@@ -205,7 +227,7 @@ const JoinModal = ({roomCode}: {roomCode: string}) => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleJoin} className="space-y-4">
+            <form className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Your Name *</Label>
                 <Input

@@ -10,28 +10,26 @@ import { Label } from "@/components/ui/label"
 import { QuizLayout } from "@/components/quiz-layout"
 import { motion } from "framer-motion"
 import { ArrowLeft } from "lucide-react"
-import { createSession } from "@/lib/auth"
 import { NavLink, useNavigate } from "react-router-dom"
+import { useAuth } from "@/context/AuthContext"
+import toast from "react-hot-toast"
 
 export default function AuthPage() {
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const { login, isLoading } = useAuth()
+  const [userName, setUserName] = useState("")
+  const [password, setPassword] = useState("")
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim()) return
 
-    setIsLoading(true)
-
-    // Create session
-    await createSession({ name: name.trim(), email: email.trim() || undefined })
+    const isLoggedIn = await login(userName, password)
 
     // Redirect to dashboard
-    navigate("/dashboard")
-
-    setIsLoading(false)
+    if (isLoggedIn) {
+      toast.success("Login successful")
+      navigate("/dashboard")
+    }
   }
 
   return (
@@ -55,43 +53,43 @@ export default function AuthPage() {
 
           <Card>
             <CardHeader className="text-center">
-              <CardTitle className="text-3xl font-bold text-primary">Welcome to QuizMaster</CardTitle>
+              <CardTitle className="text-3xl font-bold text-primary">Login</CardTitle>
               <CardDescription>Enter your details to start hosting quizzes</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name *</Label>
+                  <Label htmlFor="name">Username <span className="text-orange-500">*</span></Label>
                   <Input
                     id="name"
                     type="text"
                     placeholder="Enter your name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
                     required
                     className="text-lg"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email (optional)</Label>
+                  <Label htmlFor="email">Password <span className="text-orange-500">*</span></Label>
                   <Input
                     id="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    type="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="text-lg"
                   />
                 </div>
 
-                <Button type="submit" className="w-full text-lg py-6" disabled={!name.trim() || isLoading}>
-                  {isLoading ? "Creating Session..." : "Continue to Dashboard"}
+                <Button type="submit" className="w-full text-lg py-6" disabled={!userName.trim() || isLoading}>
+                  {isLoading ? "Please wait..." : "Login"}
                 </Button>
               </form>
 
               <div className="mt-6 text-center text-sm text-muted-foreground">
-                <p>By continuing, you agree to our terms of service</p>
+                <p>Don't have and account? <NavLink className={'text-primary hover:underline'} to={"/auth/signup"}>Signup</NavLink></p>
               </div>
             </CardContent>
           </Card>

@@ -28,7 +28,6 @@ router.get("/me", authMiddleware, async(req, res) => {
 
 router.post("/login", async(req, res) => {
     const { username, password } = req.body;
-    console.log(username, password);
 
     const user = await prisma.user.findUnique({
         where: { username: username }
@@ -47,15 +46,14 @@ router.post("/login", async(req, res) => {
             secure: true, 
             sameSite: "none" 
         });
-        res.status(200).json({ message: "User logged in successfully", token });
+        res.status(200).json({ user: {id: user.id, username: user.username, email: user.email}, message: "User logged in successfully", token });
     } else {
         res.status(401).json({ message: "Invalid credentials" });
     }
 });
 
-router.post("/register", async(req, res) => {
+router.post("/signup", async(req, res) => {
     const { username, email, password } = req.body;
-    console.log(username, email, password);
     const hashedPassword = await bcrypt.hash(password, 10); 
 
     const newUser: Prisma.UserCreateInput = {

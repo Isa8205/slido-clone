@@ -39,6 +39,7 @@ router.post("/create", authMiddleware, async(req, res) => {
             }
         })
         
+        console.log(io.emit("open-room", room.code))
         res.status(201).json({ message: "Room created successfully", roomCode: room.code });
     } catch (error) {
         console.error('Error creating room:', error);

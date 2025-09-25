@@ -51,7 +51,7 @@ const httpServer = createServer(app);
 
 export const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: "*",
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -63,11 +63,20 @@ io.on("connection", (socket) => {
 
   socket.on("join-room", (roomCode) => {
     if (!activeRooms.has(roomCode)) {
-      return
+      socket.emit("message", "failed to join")
+      return 
     }
     socket.join(roomCode);
     console.log(`User ${socket.id} joined room ${roomCode}`);
   });
+
+  socket.on("leave-room", (roomCode) => {
+    if (!activeRooms.has(roomCode)) {
+      return
+    }
+    socket.leave(roomCode)
+    return { message: "You have succesfully left the room" }
+  })
 
   socket.on("open-room", (roomCode) => {
     activeRooms.add(roomCode)

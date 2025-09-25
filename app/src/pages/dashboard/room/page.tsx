@@ -1,32 +1,31 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { useSocket } from "@/hooks/useSocket";
 import type { Participant, Room } from "@/lib/room";
 import { motion, AnimatePresence } from "framer-motion";
 import { Copy, Play, Users, UserPlus, Lock } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useParams } from "react-router-dom";
 
 export function RoomHostPage() {
     const { roomCode } = useParams()
     const [participants, setParticipants] = useState<Participant[]>([])
-    const [currentRoom, setCurrentRoom] = useState<Room>({
-        hostId: "",
-        hostName: "",
-        code: roomCode || "",
-        status: "waiting",
-        questions: [],
-        participants: [],
-        createdAt: new Date(),
-    })
+    const socket = useSocket(roomCode!)
 
     const handleCopyRoomCode = () => {
-    if (currentRoom) {
-      navigator.clipboard.writeText(currentRoom.code)
+      navigator.clipboard.writeText(roomCode!)
       toast.success("Room code copied to clipboard!")
     }
-  }
+
+    useEffect(() => {
+        socket.on("new-participant", (p) => setParticipants(prev => [...prev, p]))
+
+        return () => {
+            socket.off("new-participant")
+        }
+    })
 
     return (
         <div className="min-h-screen max-w-4xl mx-auto space-y-8">
@@ -44,9 +43,6 @@ export function RoomHostPage() {
                         <CardTitle className="text-2xl">Room Active</CardTitle>
                         <CardDescription>Share this code with participants</CardDescription>
                     </div>
-                    <Badge variant="secondary" className="text-lg px-4 py-2">
-                        {currentRoom.status === "waiting" ? "Waiting" : "In Progress"}
-                    </Badge>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -54,7 +50,7 @@ export function RoomHostPage() {
                     <div className="text-sm text-muted-foreground mb-2">Room Code</div>
                     <div className="flex items-center justify-center gap-4">
                         <div className="text-4xl font-mono font-bold text-primary bg-muted px-6 py-3 rounded-lg">
-                        {currentRoom.code}
+                        {roomCode}
                         </div>
                         <Button variant="outline" size="sm" onClick={handleCopyRoomCode} className="gap-2 bg-transparent">
                         <Copy className="w-4 h-4" />
@@ -95,7 +91,7 @@ export function RoomHostPage() {
                         <UserPlus className="w-12 h-12 mx-auto mb-4 opacity-50" />
                         <p>Waiting for participants to join...</p>
                         <p className="text-sm mt-2">
-                            Share the room code: <span className="font-mono font-bold">{currentRoom.code}</span>
+                            Share the room code: <span className="font-mono font-bold">{roomCode}</span>
                         </p>
                         </motion.div>
                     ) : (
