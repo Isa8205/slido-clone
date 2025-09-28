@@ -2,7 +2,7 @@ import { authMiddleware } from "../middleware/auth.middleware";
 import { PrismaClient } from "@prisma/client";
 import { Router } from "express";
 import jwt from 'jsonwebtoken'
-import { io } from "..";
+import redisClient from "../lib/redisClient";
 
 const router = Router();
 const prisma = new PrismaClient()
@@ -39,7 +39,6 @@ router.post("/create", authMiddleware, async(req, res) => {
             }
         })
         
-        console.log(io.emit("open-room", room.code))
         res.status(201).json({ message: "Room created successfully", roomCode: room.code });
     } catch (error) {
         console.error('Error creating room:', error);
@@ -79,18 +78,29 @@ router.post("/join/:roomCode", async(req, res) => {
             if (room.endedAt) {
                 return res.status(410).json({ message: "The room has ended"})
             }
+
+            let participantId;
+            let fetchedParticipantIds = await redisClient.sMembers(`room:${roomCode}participantIds`);
+            let currentParticipantIds: string[] = []
+            if (fetchedParticipantIds) {
+                currentParticipantIds = fetchedParticipantIds;   
+            }
+
+            do {
+                participantId = Math.random().toString(36).substring(2, 8);
+            } while (currentParticipantIds.includes(participantId));
+
+            await redisClient.sAdd(`room:${roomCode}participantIds`, participantId);
+            await redisClient.expire(`room:${roomCode}participantIds`, 3600);
             
             const roomSessionData = {
+                id: participantId,
                 username: username,
                 roomCode: roomCode
             }
             const roomToken = jwt.sign(roomSessionData, JWT_SECRET!, { expiresIn: '1h' })
             res.cookie("room-token", roomToken, { httpOnly: true, sameSite: "none", secure: true, expires: new Date(Date.now() + 3600000) })
-            res.status(200).json({ message: "Joined room successfully", roomCode });
-            io.to(roomCode).emit('new-participant', {
-                name: username,
-                joinedAt: new Date()
-            })
+            res.status(200).json({ message: "Joined room successfully", roomCode, roomToken });
         } else {
             res.status(404).json({ message: "Room not found" });
         }

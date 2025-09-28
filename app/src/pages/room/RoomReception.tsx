@@ -1,41 +1,25 @@
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import { QuizLayout } from "@/components/quiz-layout"
-import { getSession, type User } from "@/lib/auth"
 import { LogOut } from "lucide-react"
 import { useNavigate, useParams } from "react-router-dom"
-import { useSocket } from "@/hooks/useSocket"
+import { useSocket } from "@/context/SocketContext"
 
 export default function RoomReceptionPage() {
-  const [user, setUser] = useState<User | null>(null)
-
   const { roomCode } = useParams()
   const navigate = useNavigate()
-
-  if (!roomCode || !user) {
-    navigate("/")
-  }
-  const socket = useSocket(roomCode!)
-  console.log(socket)
+  const { socket, leaveRoom } = useSocket()
 
   const handleLeaveRoom = () => {
-    if (user?.name) {
-      socket.emit("leave-room", user.name)
-    }
+    leaveRoom(roomCode as string)
     navigate("/")
   }
-
-  useEffect(() => {
-    const session = getSession()
-    if (session?.user) {
-      setUser(session.user)
-    }
-  }, [])
 
   useEffect(() => {
     socket.on("proceed-to-quiz", () => navigate(`/room/${roomCode}/quiz`))
 
     return () => {
-        socket.off("new-participant")
+      socket.off("proceed-to-quiz")
+      leaveRoom(roomCode as string)
     }
   }, [socket])
 
@@ -45,7 +29,7 @@ export default function RoomReceptionPage() {
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-foreground">Welcome, {user?.name}!</h1>
+                    <h1 className="text-2xl font-bold">Room Code: {roomCode}</h1>
                     <p className="text-muted-foreground">The quiz session will begin once participants join</p>
                 </div>
 

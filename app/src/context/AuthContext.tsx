@@ -107,11 +107,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         (async() => {
-            const res = await api.get("/auth/me")
-            console.log(res)
-            if (res.status === 200) {
-                setUser(res.data.user)
-                setIsAuthenticated(true)
+            try {
+                const res = await api.get("/auth/me")
+                console.log(res)
+                if (res.status === 200) {
+                    setUser(res.data.user)
+                    setIsAuthenticated(true)
+                }
+            } catch (err) {
+                if (axios.isAxiosError(err)) {
+                    const status = err.response?.status;
+                    if (status === 500) {
+                        toast.error("Something went wrong on the server. Please try again.")
+                    } else if (status === 401) {
+                        localStorage.removeItem("access-token")
+                        setUser(null)
+                        setIsAuthenticated(false)
+                    }
+                }
             }
         })()
     }, [])

@@ -1,25 +1,26 @@
 "use client"
 
-import { useState, type FormEvent, type FormEventHandler } from "react"
+import { useState, type FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Zap, Trophy } from "lucide-react"
+import { Users, Zap, Trophy, X } from "lucide-react"
 import { motion } from "framer-motion"
 import { useNavigate } from "react-router-dom"
 import { Label } from "@/components/ui/label"
 import toast from "react-hot-toast"
 import api from "./lib/axios"
 import axios from "axios"
-import { clearSession, getSession } from "./lib/auth"
+import { clearSession } from "./lib/auth"
+import { useAuth } from "./context/AuthContext"
+import { useSocket } from "./context/SocketContext"
 
 export default function LandingPage() {
   const [roomCode, setRoomCode] = useState("")
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false)
   const [isPinging, setIsPinging] = useState(false)
   const navigate = useNavigate()
-
-  const session = getSession()
+  const { isAuthenticated } = useAuth()
 
   const handleJoinQuiz = async() => {
     setIsPinging(true)
@@ -51,7 +52,7 @@ export default function LandingPage() {
   }
 
   const handleHostQuiz = () => {
-    navigate("/auth/login")
+    navigate("/dashboard")
   }
 
   return (
@@ -63,7 +64,7 @@ export default function LandingPage() {
         </div>
 
         <div className="px-4 py-4">
-          {session?.isAuthenticated ? (
+          {isAuthenticated ? (
             <div className="flex gap-2">
               <Button className="" onClick={() => clearSession()}>Logout</Button>
               <img className="h-10 w-10 rounded-full" src="https://picsum.photos/200/200" alt="profile" />
@@ -184,23 +185,24 @@ export default function LandingPage() {
         </motion.div>
       </div>
 
-      {isJoinModalOpen && <JoinModal roomCode={roomCode} />}
+      {isJoinModalOpen && <JoinModal roomCode={roomCode} onClose={() => setIsJoinModalOpen(false)} />}
     </div>
   )
 }
 
-const JoinModal = ({roomCode}: {roomCode: string}) => {
+const JoinModal = ({roomCode, onClose}: {roomCode: string, onClose: () => void}) => {
   const [username, setUsername] = useState("")
   const [isJoining, setIsJoining] = useState(false)
   const navigate = useNavigate()
+  const { joinRoom } = useSocket()
 
   const handleJoin = async(e: FormEvent) => {
     e.preventDefault()
     setIsJoining(true);
     try {
       const res = await api.post(`room/join/${roomCode}`, { username })
-      console.log(res)
       if (res.status === 200) {
+        joinRoom({ roomCode, token: res.data.token })
         toast.success(`Welcome to the room ${username}!`)
         navigate(`/room/${roomCode}`)
       }
@@ -221,6 +223,7 @@ const JoinModal = ({roomCode}: {roomCode: string}) => {
       >
         <Card>
           <CardHeader className="text-center">
+            <button onClick={onClose}><X className="w-6 h-6" /></button>
             <CardTitle className="text-3xl font-bold text-primary">Enter Username</CardTitle>
             <CardDescription>
               Room Code: <span className="font-mono font-bold text-foreground">{roomCode}</span>

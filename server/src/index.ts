@@ -4,15 +4,21 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import cors from "cors"
 import cookieParser from "cookie-parser"
+import redis from "./lib/redisClient";
+import  Jwt  from "jsonwebtoken";
+import "dotenv/config";
+
+
 
 import router from "./routes";
 
+const JWT_SECRET = process.env.JWT_SECRET
 const app: Express = express();
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
-  "http://192.168.88.67:5173"
+  "http://172.16.95.214:5173"
   
 ]
 
@@ -57,35 +63,26 @@ export const io = new Server(httpServer, {
   }
 });
 
-const activeRooms = new Set()
 io.on("connection", (socket) => {
+  socket.data.username = "Anonymous"
   console.log(`User connected: ${socket.id}`);
 
-  socket.on("join-room", (roomCode) => {
-    if (!activeRooms.has(roomCode)) {
-      socket.emit("message", "failed to join")
-      return 
-    }
+  socket.on("join-room", data => {
+    const roomToken = data.roomToken
+    const roomSessionData = Jwt.verify(roomToken, JWT_SECRET!, { ignoreExpiration: true}) as { username: string, roomCode: string }
+    socket.data.username = roomSessionData.username
+    const roomCode = data.roomCode
     socket.join(roomCode);
-    console.log(`User ${socket.id} joined room ${roomCode}`);
+    console.log(`${socket.data.username} joined room ${roomCode}`);
   });
 
   socket.on("leave-room", (roomCode) => {
-    if (!activeRooms.has(roomCode)) {
-      return
-    }
     socket.leave(roomCode)
-    return { message: "You have succesfully left the room" }
+    socket.data.username = "Anonymous"
+    console.log(`${socket.data.username} left room ${roomCode}`);
   })
 
-  socket.on("open-room", (roomCode) => {
-    activeRooms.add(roomCode)
-    socket.join(roomCode);
-    console.log(`Host ${socket.id} created room ${roomCode}`);
-  });
-
   socket.on("close-room", (roomCode) => {
-    activeRooms.delete(roomCode)
     socket.leave(roomCode);
     io.to(roomCode).emit("room-closed")
     io.socketsLeave(roomCode) // <-- Kicks everyone out and closes room

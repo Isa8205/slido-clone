@@ -1,8 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { useSocket } from "@/hooks/useSocket";
-import type { Participant, Room } from "@/lib/room";
+import { useSocket } from "@/context/SocketContext";
+import type { Participant } from "@/lib/room";
 import { motion, AnimatePresence } from "framer-motion";
 import { Copy, Play, Users, UserPlus, Lock } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -12,7 +12,7 @@ import { useParams } from "react-router-dom";
 export function RoomHostPage() {
     const { roomCode } = useParams()
     const [participants, setParticipants] = useState<Participant[]>([])
-    const socket = useSocket(roomCode!)
+    const { socket, joinRoom } = useSocket()
 
     const handleCopyRoomCode = () => {
       navigator.clipboard.writeText(roomCode!)
@@ -20,7 +20,11 @@ export function RoomHostPage() {
     }
 
     useEffect(() => {
+        (async () => {
+            const res = await socket.timeout(1000).emitWithAck("join-room", roomCode);
+        })()
         socket.on("new-participant", (p) => setParticipants(prev => [...prev, p]))
+        socket.on("participant-left", (p) => setParticipants(prev => prev.filter(participant => participant.id !== p.id)))
 
         return () => {
             socket.off("new-participant")
