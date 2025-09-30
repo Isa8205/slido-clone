@@ -4,13 +4,12 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import cors from "cors"
 import cookieParser from "cookie-parser"
-import redis from "./lib/redisClient";
 import  Jwt  from "jsonwebtoken";
 import "dotenv/config";
 
-
-
 import router from "./routes";
+import redisClient from "./lib/redisClient";
+import { error } from "console";
 
 const JWT_SECRET = process.env.JWT_SECRET
 const app: Express = express();
@@ -18,7 +17,8 @@ const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
-  "http://172.16.95.214:5173"
+  "http://10.230.198.32:5173",
+  "http://192.168.88.67:5173"
   
 ]
 
@@ -63,16 +63,23 @@ export const io = new Server(httpServer, {
   }
 });
 
-io.on("connection", (socket) => {
+io.on("connection", async(socket) => {
   socket.data.username = "Anonymous"
   console.log(`User connected: ${socket.id}`);
+  await redisClient.sAdd("online:users", String(socket.id))
 
-  socket.on("join-room", data => {
-    const roomToken = data.roomToken
+  socket.on("join-room", async(data) => {
+    const roomToken = data.token
+    if (!roomToken) {
+      socket.send({error: "Room token should be provided"})
+      return
+    }
     const roomSessionData = Jwt.verify(roomToken, JWT_SECRET!, { ignoreExpiration: true}) as { username: string, roomCode: string }
     socket.data.username = roomSessionData.username
     const roomCode = data.roomCode
     socket.join(roomCode);
+    socket.send({ success: true})
+    await redisClient.sAdd(`room:${roomCode}:participants`, String(socket.id))
     console.log(`${socket.data.username} joined room ${roomCode}`);
   });
 
@@ -89,8 +96,18 @@ io.on("connection", (socket) => {
     console.log(`Host ${socket.id} closed room ${roomCode}`);
   })
 
-  socket.on("disconnect", () => {
+  socket.on("disconnect", async(roomCode) => {
     console.log(`User disconnected: ${socket.id}`);
+    
+    for (let room of socket.rooms) {
+      if (room !== socket.id) {
+        console.log(`${socket.id} was in room ${room}`)
+
+        socket.to(room).emit("user-left", { socketId: socket.id })
+      }
+    }
+    await redisClient.sRem(`room:${roomCode}:participants`, String(socket.id))
+    await redisClient.sRem("online:users", String(socket.id))
   });
 });
 

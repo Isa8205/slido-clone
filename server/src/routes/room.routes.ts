@@ -38,8 +38,13 @@ router.post("/create", authMiddleware, async(req, res) => {
                 }
             }
         })
+
+        const roomToken = jwt.sign({
+            username: req.user.username,
+            roomCode: roomCode
+        }, JWT_SECRET, { expiresIn: "1h"})
         
-        res.status(201).json({ message: "Room created successfully", roomCode: room.code });
+        res.status(201).json({ message: "Room created successfully", roomCode: room.code, token: roomToken });
     } catch (error) {
         console.error('Error creating room:', error);
         res.status(500).json({ message: "Failed to create room" });
@@ -108,29 +113,6 @@ router.post("/join/:roomCode", async(req, res) => {
         console.error('Error joining room:', error);
         res.status(500).json({ message: "Failed to join room" });
     }
-})
-
-router.post("/set-questions/:roomCode", authMiddleware, async(req, res) => {
-    const quizset = req.body.quizset
-    const { roomCode } = req.params
-    
-    const room = await prisma.room.findFirst({ where: { code: roomCode }, include: { owner: true } })
-    if (!room) {
-        return res.status(404).json({ message: "The room was not found. Check again" })
-    } else if (room.owner && room.owner.username !== req.user.username) {
-        return res.status(401).json({ message: "Failed, you can only modify your own rooms!"})
-    }
-    const result = await prisma.quizSet.create({
-        data: {
-            quizzes: `${JSON.stringify(quizset)}`,
-            room: {
-                connect: {
-                    code: roomCode
-                }
-            }
-        }
-    })
-    res.status(200).json({ message: "Questions set successfully", result })
 })
 
 router.get("/results/:roomCode", (req, res) => {

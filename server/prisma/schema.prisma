@@ -35,9 +35,11 @@ model Room {
 
 model QuizSet {
   id          String      @id @default(cuid())
+  title       String
+  note        String?
   quizzes     Json?
   results     Json?
-  room        Room        @relation(fields: [roomId], references: [id])
+  room        Room?       @relation(fields: [roomId], references: [id])
   roomId      String
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt

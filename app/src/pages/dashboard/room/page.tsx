@@ -21,7 +21,14 @@ export function RoomHostPage() {
 
     useEffect(() => {
         (async () => {
-            const res = await socket.timeout(1000).emitWithAck("join-room", roomCode);
+            localStorage.getItem("room-token")
+            const res = await socket.timeout(1000).emitWithAck("join-room", { 
+                token: localStorage.getItem("room-token"), 
+            });
+            
+            if (res.data.error) {
+                console.error(res.data.error)
+            }
         })()
         socket.on("new-participant", (p) => setParticipants(prev => [...prev, p]))
         socket.on("participant-left", (p) => setParticipants(prev => prev.filter(participant => participant.id !== p.id)))
